@@ -288,7 +288,7 @@ const Feed: React.FC<FeedProps> = ({ onCreatePost, onLike, onPostClick, onCommen
 
   return (
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark relative">
-      <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md pt-safe-top border-b border-transparent">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md pt-safe-top border-b border-transparent">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex size-10 shrink-0 items-center justify-start">
             <button 

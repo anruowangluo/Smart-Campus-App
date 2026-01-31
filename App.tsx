@@ -19,6 +19,8 @@ const App: React.FC = () => {
     return !!localStorage.getItem('smart_campus_token');
   });
 
+  const [showLogin, setShowLogin] = useState(false);
+
   // Initialize state from localStorage if available, otherwise default to HOME
   const [currentTab, setCurrentTab] = useState<AppTab>(() => {
     try {
@@ -39,7 +41,6 @@ const App: React.FC = () => {
 
   // Persist tab state whenever it changes and update visited list
   useEffect(() => {
-    if (!isAuthenticated) return;
     localStorage.setItem('smart_campus_active_tab', currentTab);
     setVisitedTabs(prev => {
       if (prev.has(currentTab)) return prev;
@@ -47,7 +48,7 @@ const App: React.FC = () => {
       next.add(currentTab);
       return next;
     });
-  }, [currentTab, isAuthenticated]);
+  }, [currentTab]);
 
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   
@@ -64,7 +65,6 @@ const App: React.FC = () => {
   const [commonServices, setCommonServices] = useState<ServiceItem[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     // Try to load from local storage first to persist user edits
     const savedServices = localStorage.getItem('smart_campus_my_services');
     if (savedServices) {
@@ -77,7 +77,7 @@ const App: React.FC = () => {
     } else {
       loadDefaultCommonServices();
     }
-  }, [isAuthenticated]);
+  }, []);
 
   const loadDefaultCommonServices = () => {
     getCommonServices().then(data => {
@@ -133,9 +133,16 @@ const App: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  // --- Auth Guard Helpers ---
+  const requireAuth = (action: () => void) => {
+    if (isAuthenticated) {
+        action();
+    } else {
+        setShowLogin(true);
+    }
+  };
+
   // --- Post Creation ---
-  // Note: Since Feed now manages its own list for pagination, creating a post here won't instantly update the feed list
-  // unless we pass a trigger. For this demo, we assume the user will pull-to-refresh after posting.
   const handleCreatePost = async (content: string, image?: string) => {
     await createPost(content, image);
     setShowCreatePost(false);
@@ -143,8 +150,9 @@ const App: React.FC = () => {
 
   // Like logic for Detail view
   const handlePostLike = (id: string) => {
-    // This is primarily for the PostDetail view now or global state sync if we added Context
-    console.log("Liked post", id);
+    requireAuth(() => {
+        console.log("Liked post", id);
+    });
   };
 
   const handlePostShare = (id: string) => {
@@ -162,24 +170,14 @@ const App: React.FC = () => {
   // --- Login / Logout Handlers ---
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
-    setVisitedTabs(new Set([AppTab.HOME]));
-    setCurrentTab(AppTab.HOME);
+    setShowLogin(false);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('smart_campus_token');
     setIsAuthenticated(false);
-    setVisitedTabs(new Set());
     setCurrentTab(AppTab.HOME);
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="h-full bg-background-light dark:bg-background-dark max-w-md mx-auto relative shadow-2xl overflow-hidden">
-        <Login onLoginSuccess={handleLoginSuccess} />
-      </div>
-    );
-  }
 
   return (
     <div className="h-full bg-background-light dark:bg-background-dark max-w-md mx-auto relative shadow-2xl overflow-hidden animate-in fade-in duration-500">
@@ -193,8 +191,10 @@ const App: React.FC = () => {
               commonServices={commonServices}
               onNavigateToApps={() => setCurrentTab(AppTab.APPS)} 
               onNewsClick={(news) => setSelectedNews(news)}
-              onOpenNotifications={() => setShowNotifications(true)}
-              unreadCount={unreadCount}
+              onOpenNotifications={() => requireAuth(() => setShowNotifications(true))}
+              unreadCount={isAuthenticated ? unreadCount : 0}
+              isAuthenticated={isAuthenticated}
+              onLogin={() => setShowLogin(true)}
             />
         </div>
       )}
@@ -212,7 +212,7 @@ const App: React.FC = () => {
       {visitedTabs.has(AppTab.FEED) && (
         <div className={`h-full w-full ${currentTab === AppTab.FEED ? 'block' : 'hidden'}`}>
             <Feed 
-              onCreatePost={() => setShowCreatePost(true)}
+              onCreatePost={() => requireAuth(() => setShowCreatePost(true))}
               onLike={handlePostLike}
               onPostClick={(post) => setSelectedPostState({ post, scrollToComments: false })}
               onCommentClick={(post) => setSelectedPostState({ post, scrollToComments: true })}
@@ -224,7 +224,11 @@ const App: React.FC = () => {
 
       {visitedTabs.has(AppTab.PROFILE) && (
         <div className={`h-full w-full ${currentTab === AppTab.PROFILE ? 'block' : 'hidden'}`}>
-            <Profile onLogout={handleLogout} />
+            <Profile 
+              onLogout={handleLogout} 
+              isAuthenticated={isAuthenticated}
+              onLogin={() => setShowLogin(true)}
+            />
         </div>
       )}
 
@@ -237,12 +241,19 @@ const App: React.FC = () => {
           onBack={() => setSelectedPostState(null)}
           onLikePost={handlePostLike}
           initialScrollToComments={selectedPostState.scrollToComments}
+          isAuthenticated={isAuthenticated}
+          onLogin={() => setShowLogin(true)}
         />
       )}
 
       {/* Overlay Layer - News Detail */}
       {selectedNews && (
-        <NewsDetail news={selectedNews} onBack={() => setSelectedNews(null)} />
+        <NewsDetail 
+            news={selectedNews} 
+            onBack={() => setSelectedNews(null)} 
+            isAuthenticated={isAuthenticated}
+            onLogin={() => setShowLogin(true)}
+        />
       )}
 
       {/* Overlay Layer - Notifications */}
@@ -267,6 +278,14 @@ const App: React.FC = () => {
         <CreatePost 
           onBack={() => setShowCreatePost(false)} 
           onSubmit={handleCreatePost}
+        />
+      )}
+
+      {/* Overlay Layer - Login (Full Page Overlay) */}
+      {showLogin && (
+        <Login 
+            onLoginSuccess={handleLoginSuccess} 
+            onCancel={() => setShowLogin(false)} 
         />
       )}
     </div>

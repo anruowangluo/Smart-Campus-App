@@ -108,7 +108,7 @@ const Apps: React.FC<AppsProps> = ({ onSearch, myServices, onUpdateMyServices })
   return (
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark">
       {/* Header */}
-      <header className="flex-none z-40 bg-background-light dark:bg-background-dark pt-safe-top">
+      <header className="flex-none z-40 bg-white dark:bg-background-dark pt-safe-top border-b border-gray-100 dark:border-gray-800/50">
         <div className="flex items-center px-4 pt-2 pb-2 justify-center relative">
           <h2 className="text-[17px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">全部应用</h2>
         </div>
@@ -118,7 +118,7 @@ const Apps: React.FC<AppsProps> = ({ onSearch, myServices, onUpdateMyServices })
             onClick={onSearch}
             className="flex flex-col h-10 w-full relative group"
           >
-            <div className="flex w-full flex-1 items-center rounded-xl h-full overflow-hidden bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700/50 group-active:bg-gray-50 dark:group-active:bg-gray-700 transition-colors">
+            <div className="flex w-full flex-1 items-center rounded-xl h-full overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm border border-transparent dark:border-gray-700/50 group-active:bg-gray-200 dark:group-active:bg-gray-700 transition-colors">
               <div className="text-gray-400 flex border-none items-center justify-center pl-3">
                 <Icon name="search" size={20} />
               </div>

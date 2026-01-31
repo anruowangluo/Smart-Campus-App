@@ -3,9 +3,11 @@ import Icon from '../components/Icon';
 
 interface ProfileProps {
   onLogout?: () => void;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ onLogout }) => {
+const Profile: React.FC<ProfileProps> = ({ onLogout, isAuthenticated, onLogin }) => {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -33,16 +35,22 @@ const Profile: React.FC<ProfileProps> = ({ onLogout }) => {
   return (
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark relative">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md transition-all duration-300">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md transition-all duration-300 border-b border-transparent">
         <div className="relative flex items-center justify-between px-4 py-3 h-[52px]">
           
           {/* Left: Sticky Profile Info (Fade In) */}
           <div className={`flex items-center gap-3 ml-4 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) ${showStickyHeader ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-             <div 
-               className="size-8 rounded-full bg-cover bg-center border border-gray-200 dark:border-gray-700 shadow-sm"
-               style={{ backgroundImage: `url("${avatarUrl}")` }}
-             ></div>
-             <span className="font-bold text-sm text-slate-900 dark:text-white">张三</span>
+             {isAuthenticated ? (
+               <>
+                 <div 
+                   className="size-8 rounded-full bg-cover bg-center border border-gray-200 dark:border-gray-700 shadow-sm"
+                   style={{ backgroundImage: `url("${avatarUrl}")` }}
+                 ></div>
+                 <span className="font-bold text-sm text-slate-900 dark:text-white">张三</span>
+               </>
+             ) : (
+                <span className="font-bold text-sm text-slate-900 dark:text-white">游客</span>
+             )}
           </div>
 
           {/* Center: Page Title (Fade Out) */}
@@ -66,57 +74,82 @@ const Profile: React.FC<ProfileProps> = ({ onLogout }) => {
         {/* Profile Info */}
         <section className="px-4 py-6">
           <div className="flex items-center gap-5">
-            <div className="relative">
-              <div 
-                className="size-20 rounded-full bg-cover bg-center border-2 border-white dark:border-slate-800 shadow-sm"
-                style={{ backgroundImage: `url("${avatarUrl}")` }}
-              ></div>
-              <div className="absolute bottom-0 right-0 size-6 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">张三</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">计算机科学与技术学院</p>
-              <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5 tracking-wider uppercase">学号: 2023010123</p>
-            </div>
+            {isAuthenticated ? (
+                <>
+                    <div className="relative">
+                    <div 
+                        className="size-20 rounded-full bg-cover bg-center border-2 border-white dark:border-slate-800 shadow-sm"
+                        style={{ backgroundImage: `url("${avatarUrl}")` }}
+                    ></div>
+                    <div className="absolute bottom-0 right-0 size-6 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
+                    </div>
+                    <div className="flex flex-col">
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">张三</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">计算机科学与技术学院</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-xs mt-0.5 tracking-wider uppercase">学号: 2023010123</p>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="relative" onClick={onLogin}>
+                        <div className="size-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm">
+                            <Icon name="person" size={40} className="text-gray-400" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-start">
+                        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">未登录</h2>
+                        <button 
+                            onClick={onLogin}
+                            className="px-4 py-1.5 bg-primary text-white text-sm font-bold rounded-full shadow-md shadow-primary/30 active:scale-95 transition-transform"
+                        >
+                            立即登录 / 注册
+                        </button>
+                    </div>
+                </>
+            )}
           </div>
         </section>
 
-        {/* Menu Group 1 */}
-        <div className="px-4 mt-2">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 group">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Icon name="person" size={22} />
+        {/* Menu Group 1 - Only visible if logged in */}
+        {isAuthenticated && (
+            <div className="px-4 mt-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800">
+                <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800 group">
+                <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Icon name="person" size={22} />
+                    </div>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">个人信息</span>
                 </div>
-                <span className="font-medium text-slate-900 dark:text-slate-100">个人信息</span>
-              </div>
-              <Icon name="chevron_right" className="text-slate-400" />
-            </button>
-            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Icon name="verified_user" size={22} />
+                <Icon name="chevron_right" className="text-slate-400" />
+                </button>
+                <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Icon name="verified_user" size={22} />
+                    </div>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">账号安全</span>
                 </div>
-                <span className="font-medium text-slate-900 dark:text-slate-100">账号安全</span>
-              </div>
-              <Icon name="chevron_right" className="text-slate-400" />
-            </button>
-          </div>
-        </div>
+                <Icon name="chevron_right" className="text-slate-400" />
+                </button>
+            </div>
+            </div>
+        )}
 
-        {/* Menu Group 2 */}
+        {/* Menu Group 2 - Public */}
         <div className="px-4 mt-6">
           <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Icon name="lock" size={22} />
+            {isAuthenticated && (
+                <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <Icon name="lock" size={22} />
+                    </div>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">隐私设置</span>
                 </div>
-                <span className="font-medium text-slate-900 dark:text-slate-100">隐私设置</span>
-              </div>
-              <Icon name="chevron_right" className="text-slate-400" />
-            </button>
+                <Icon name="chevron_right" className="text-slate-400" />
+                </button>
+            )}
             <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-50 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -135,19 +168,79 @@ const Profile: React.FC<ProfileProps> = ({ onLogout }) => {
               </div>
               <Icon name="chevron_right" className="text-slate-400" />
             </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
+            <button className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <Icon name="info" size={22} />
+                </div>
+                <span className="font-medium text-slate-900 dark:text-slate-100">关于我们</span>
+              </div>
+              <Icon name="chevron_right" className="text-slate-400" />
+            </button>
           </div>
         </div>
 
-        {/* Logout */}
-        <div className="px-4 mt-10">
-          <button 
-            onClick={handleLogoutClick}
-            className="w-full py-4 bg-white dark:bg-slate-900 text-red-500 font-bold rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
-          >
-            退出登录
-          </button>
-          <p className="text-center text-slate-400 text-xs mt-6 mb-10">Version 2.4.0 (Build 2024)</p>
-        </div>
+        {/* Logout - Only if authenticated */}
+        {isAuthenticated && (
+            <div className="px-4 mt-10">
+            <button 
+                onClick={handleLogoutClick}
+                className="w-full py-4 bg-white dark:bg-slate-900 text-red-500 font-bold rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+                退出登录
+            </button>
+            <p className="text-center text-slate-400 text-xs mt-6 mb-10">Version 2.4.0 (Build 2024)</p>
+            </div>
+        )}
+
+        {!isAuthenticated && (
+             <p className="text-center text-slate-400 text-xs mt-10 mb-10">Version 2.4.0 (Build 2024)</p>
+        )}
       </main>
 
       {/* Logout Confirmation Modal */}

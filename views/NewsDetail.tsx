@@ -6,9 +6,11 @@ import { getNewsComments, createNewsComment } from '../api/index';
 interface NewsDetailProps {
   news: NewsItem;
   onBack: () => void;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
-const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
+const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack, isAuthenticated, onLogin }) => {
   const [inputValue, setInputValue] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string; parentId?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +43,10 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
   }, [replyingTo]);
 
   const handleSend = async () => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
     if (!inputValue.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -88,6 +94,10 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
   };
 
   const handleReplyClick = (comment: CommentItem, parentId?: string) => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
     setReplyingTo({
       id: comment.id,
       name: comment.user.name,
@@ -96,6 +106,10 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
   };
 
   const handleLike = (commentId: string, parentId?: string) => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
     setComments(prev => prev.map(c => {
       // If it's the main comment
       if (c.id === commentId) {
@@ -293,11 +307,14 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ news, onBack }) => {
                ref={inputRef}
                type="text" 
                className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-gray-400 text-slate-900 dark:text-white"
-               placeholder={replyingTo ? "写下你的回复..." : "说点什么..."}
+               placeholder={!isAuthenticated ? "登录后发表评论" : (replyingTo ? "写下你的回复..." : "说点什么...")}
                value={inputValue}
                onChange={(e) => setInputValue(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                disabled={isSubmitting}
+               onClick={() => {
+                 if (!isAuthenticated) onLogin();
+               }}
              />
           </div>
           <button 

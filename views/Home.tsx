@@ -9,9 +9,11 @@ interface HomeProps {
   onNewsClick: (news: NewsItem) => void;
   onOpenNotifications: () => void;
   unreadCount: number;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsClick, onOpenNotifications, unreadCount }) => {
+const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsClick, onOpenNotifications, unreadCount, isAuthenticated, onLogin }) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,13 +21,16 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [newsData, userData] = await Promise.all([
-          getNews(),
-          getUserProfile()
-        ]);
+        const promises: Promise<any>[] = [getNews()];
+        if (isAuthenticated) {
+            promises.push(getUserProfile());
+        }
+        
+        const results = await Promise.all(promises);
+        const newsData = results[0];
         
         if (Array.isArray(newsData)) setNews(newsData);
-        if (userData) setUser(userData);
+        if (isAuthenticated && results[1]) setUser(results[1]);
         
       } catch (error) {
         console.error("Failed to fetch home data:", error);
@@ -34,12 +39,12 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
       }
     };
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
 
   return (
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark relative">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md pt-safe-top border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md pt-safe-top border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="size-10"></div>
           <h2 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-slate-900 dark:text-white">首页</h2>
@@ -49,7 +54,7 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
               className="relative flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Icon name="notifications" className="text-slate-800 dark:text-slate-100" />
-              {unreadCount > 0 && (
+              {isAuthenticated && unreadCount > 0 && (
                 <span className="absolute top-2 right-2 flex h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-background-dark"></span>
               )}
             </button>
@@ -60,17 +65,21 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
       {/* Main Content - Adjusted bottom padding to 80px */}
       <main className="flex-1 overflow-y-auto px-4 pt-2 pb-[calc(env(safe-area-inset-bottom,20px)+80px)] no-scrollbar overscroll-y-none">
         
-        {/* Student ID Card */}
-        <div className="relative overflow-hidden rounded-xl bg-primary p-4 text-white shadow-xl shadow-primary/20 mb-6 min-h-[140px]">
+        {/* Student ID Card or Guest Card */}
+        <div className={`relative overflow-hidden rounded-xl bg-primary text-white shadow-xl shadow-primary/20 mb-6 transition-all duration-300 ${isAuthenticated ? 'min-h-[140px] p-4' : 'h-[120px] px-5 flex items-center'}`}>
           <div className="absolute inset-0 opacity-10" 
                style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)', backgroundSize: '20px 20px' }}></div>
           
-          <div className="absolute top-3 right-3 z-20">
-            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest border border-white/30 backdrop-blur-md">Student</span>
-          </div>
+          {isAuthenticated && (
+            <div className="absolute top-3 right-3 z-20">
+              <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-widest border border-white/30 backdrop-blur-md">
+                  Student
+              </span>
+            </div>
+          )}
 
-          {user ? (
-            <div className="relative z-10 flex gap-3 items-center">
+          {isAuthenticated && user ? (
+            <div className="relative z-10 flex gap-3 items-center w-full">
               <div className="shrink-0">
                 <div 
                   className="h-14 w-11 rounded-lg bg-white/20 border-2 border-white/30 bg-center bg-no-repeat bg-cover shadow-sm"
@@ -84,10 +93,32 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
                   <p className="text-[10px] text-white/80 font-mono tracking-tight">学号: {user.studentId}</p>
                 </div>
               </div>
+              <div className="absolute -bottom-8 -right-6 opacity-10 pointer-events-none">
+                <Icon name="school" size={80} />
+              </div>
+            </div>
+          ) : !isAuthenticated ? (
+            // Guest State - Expanded Banner (120px height)
+            <div className="relative z-10 flex items-center justify-between w-full gap-4">
+               <div className="flex items-center gap-4 min-w-0">
+                   <div className="size-12 rounded-full bg-white/20 flex items-center justify-center border border-white/30 shrink-0 shadow-inner">
+                      <Icon name="person" className="text-white" size={28} />
+                   </div>
+                   <div className="flex flex-col min-w-0 gap-0.5">
+                     <h3 className="text-lg font-bold tracking-wide truncate">欢迎来到智慧校园</h3>
+                     <p className="text-xs text-white/80 truncate">登录以使用完整功能</p>
+                   </div>
+               </div>
+               <button 
+                 onClick={onLogin}
+                 className="shrink-0 px-4 py-2 bg-white text-primary text-sm font-bold rounded-xl shadow-lg shadow-black/10 active:scale-95 transition-transform"
+               >
+                 立即登录
+               </button>
             </div>
           ) : (
-            // Skeleton for User Card
-            <div className="relative z-10 flex gap-3 items-center animate-pulse">
+            // Skeleton for User Card (Loading)
+            <div className="relative z-10 flex gap-3 items-center w-full animate-pulse">
                <div className="h-14 w-11 rounded-lg bg-white/20"></div>
                <div className="flex-1 space-y-2">
                  <div className="h-5 bg-white/20 rounded w-1/3"></div>
@@ -95,10 +126,6 @@ const Home: React.FC<HomeProps> = ({ commonServices, onNavigateToApps, onNewsCli
                </div>
             </div>
           )}
-          
-          <div className="absolute -bottom-4 -right-2 opacity-10 pointer-events-none">
-            <Icon name="school" size={80} />
-          </div>
         </div>
 
         {/* Common Services */}

@@ -4,9 +4,10 @@ import { login, getCaptchaImage } from '../api';
 
 interface LoginProps {
   onLoginSuccess: () => void;
+  onCancel?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, onCancel }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState(''); // Captcha code input
@@ -16,6 +17,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isClosing, setIsClosing] = useState(false);
 
   // Fetch Captcha on mount
   useEffect(() => {
@@ -37,6 +39,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const handleClose = (callback: () => void) => {
+    setIsClosing(true);
+    setTimeout(() => {
+      callback();
+    }, 300); // Match animation duration
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) return;
@@ -52,9 +61,10 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const { token } = await login(username, password, code, uuid);
       localStorage.setItem('smart_campus_token', token);
       
-      setTimeout(() => {
+      // Animate out before notifying success
+      handleClose(() => {
         onLoginSuccess();
-      }, 500);
+      });
       
     } catch (err: any) {
       setError(err.message || '登录失败，请检查账号密码');
@@ -67,14 +77,30 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const handleCancel = () => {
+    if (onCancel) {
+      handleClose(onCancel);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-background-dark relative overflow-hidden">
+    <div className={`absolute inset-0 z-[70] flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden ${isClosing ? 'animate-slide-out-right' : 'animate-slide-in-right'}`}>
       {/* Decorative Background */}
       <div className="absolute top-0 left-0 w-full h-[45%] bg-primary rounded-b-[3rem] shadow-xl z-0 overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-[10%] left-[-10%] w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-[-10%] right-[20%] w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
       </div>
+
+      {/* Close Button (Visitor Mode) */}
+      {onCancel && (
+        <button 
+          onClick={handleCancel}
+          className="absolute top-4 right-4 z-20 p-2 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 backdrop-blur-md rounded-full transition-colors"
+        >
+          <Icon name="close" size={24} />
+        </button>
+      )}
 
       {/* Content */}
       <div className="relative z-10 flex flex-col flex-1 px-8 pt-20">
@@ -175,9 +201,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
         {/* Footer */}
         <div className="flex-1 flex flex-col justify-end pb-8 items-center space-y-4">
-           <button className="text-slate-400 text-xs hover:text-primary transition-colors">
-              忘记密码?
-           </button>
+           {onCancel && (
+             <button onClick={handleCancel} className="text-white/60 text-sm hover:text-white transition-colors">
+               先逛一逛 &gt;
+             </button>
+           )}
            <p className="text-[10px] text-slate-300 dark:text-slate-600">
               © 2024 Smart Campus. All rights reserved.
            </p>

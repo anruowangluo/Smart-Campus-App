@@ -8,11 +8,13 @@ interface PostDetailProps {
   onBack: () => void;
   onLikePost: (id: string) => void;
   initialScrollToComments?: boolean;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
 type SortType = 'latest' | 'hottest';
 
-const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initialScrollToComments = false }) => {
+const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initialScrollToComments = false, isAuthenticated, onLogin }) => {
   const [inputValue, setInputValue] = useState('');
   const [sortType, setSortType] = useState<SortType>('latest');
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string; parentId?: string } | null>(null);
@@ -68,6 +70,10 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initi
   }, [initialScrollToComments, comments.length]);
 
   const handleSend = async () => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
     if (!inputValue.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -99,7 +105,19 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initi
     }
   };
 
+  const handleReplyClick = (comment: CommentItem) => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
+    setReplyingTo({ id: comment.id, name: comment.user.name });
+  };
+
   const handleLikeComment = (commentId: string, parentId?: string) => {
+    if (!isAuthenticated) {
+        onLogin();
+        return;
+    }
     setComments(prev => prev.map(c => {
       if (c.id === commentId) return { ...c, likes: c.likes + 1 };
       if (parentId && c.id === parentId) {
@@ -128,7 +146,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initi
         : 'animate-slide-in-right'
     }`}>
       {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-2 py-2 border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="sticky top-0 z-50 flex items-center bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-2 py-2 border-b border-gray-200/50 dark:border-gray-800/50">
         <button 
           onClick={handleBack}
           className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -248,7 +266,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initi
                      <div className="flex items-center gap-4 mt-2">
                        <span className="text-xs text-gray-400">{comment.time}</span>
                        <button 
-                         onClick={() => setReplyingTo({ id: comment.id, name: comment.user.name })}
+                         onClick={() => handleReplyClick(comment)}
                          className="text-xs font-medium text-slate-500 hover:text-primary"
                        >
                          回复
@@ -302,11 +320,14 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, onLikePost, initi
                ref={inputRef}
                type="text" 
                className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-gray-400 text-slate-900 dark:text-white"
-               placeholder={replyingTo ? "写下你的回复..." : "说点什么..."}
+               placeholder={!isAuthenticated ? "登录后发表评论" : (replyingTo ? "写下你的回复..." : "说点什么...")}
                value={inputValue}
                onChange={(e) => setInputValue(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                disabled={isSubmitting}
+               onClick={() => {
+                 if (!isAuthenticated) onLogin();
+               }}
              />
           </div>
           <button 

@@ -34,7 +34,7 @@ const Notifications: React.FC<NotificationsProps> = ({ notifications, onBack, on
 
   return (
     <div className="flex flex-col h-full bg-background-light dark:bg-background-dark animate-in slide-in-from-right duration-200 absolute inset-0 z-[60]">
-      <header className="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-2 py-2 border-b border-gray-200/50 dark:border-gray-800/50">
+      <header className="sticky top-0 z-50 flex items-center bg-white/95 dark:bg-background-dark/95 backdrop-blur-md px-2 py-2 border-b border-gray-200/50 dark:border-gray-800/50">
         <button 
           onClick={onBack}
           className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
