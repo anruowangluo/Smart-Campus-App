@@ -1,0 +1,5 @@
+{
+  "name": "Smart Campus App",
+  "description": "A comprehensive mobile-first campus application featuring student ID management, service discovery, social feed, and personal settings.",
+  "requestFramePermissions": []
+}
