@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const request = axios.create({
-  baseURL: '/dev-api',
+  baseURL: 'https://campus.banfuxiong.com/api',
+  // baseURL: '/api',
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json'

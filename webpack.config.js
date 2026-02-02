@@ -40,10 +40,10 @@ export default {
     historyApiFallback: true, // Support for SPA routing
     hot: true,
     proxy: {
-      '/dev-api': {
+      '/api': {
         target: 'http://10.10.3.150:8069',
         changeOrigin: true,
-        pathRewrite: { '^/dev-api': '' },
+        pathRewrite: { '^/api': '' },
       },
     },
   },

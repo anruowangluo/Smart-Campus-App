@@ -7,10 +7,10 @@ export default defineConfig({
     host: '0.0.0.0', // Allow access from network
     port: 5173,
     proxy: {
-      '/dev-api': {
+      '/api': {
         target: 'http://10.10.3.150:8069',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/dev-api/, '')
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },
